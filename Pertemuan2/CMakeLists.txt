@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # include_directories()
 include_directories(rapidjson/include)
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/XL/motion_bucket/")
 
 
 add_executable(Pertemuan2 main.cpp)
