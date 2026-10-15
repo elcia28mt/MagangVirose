@@ -1,0 +1,3 @@
+C:/Users/felmn/Downloads/Task2ViroseIntern/build/CMakeFiles/Task2ViroseIntern.dir
+C:/Users/felmn/Downloads/Task2ViroseIntern/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/felmn/Downloads/Task2ViroseIntern/build/CMakeFiles/ZERO_CHECK.dir
