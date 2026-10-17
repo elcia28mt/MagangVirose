@@ -1,7 +1,7 @@
 #include "main.h"
 
 // TODO: Ganti dengan mac index mu
-const int mac_index_ku = 1;  //....
+const int mac_index_ku = 9;  //....
 
 void setup() {
     Serial.begin(115200);
@@ -11,7 +11,7 @@ void setup() {
     // TODO 1: Cetak nama mu gunakan fungsi mac_index_to_names
     Serial.print("Nama Saya: ");
     Serial.println(mac_index_to_names(mac_index_ku));
-    
+
     Serial.println("Menunggu perintah...");
 }
 
