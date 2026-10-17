@@ -17,9 +17,9 @@ void setup() {
     // Uncomment salah satu baris di bawah untuk mengatur nilai EEPROM
     // EEPROM.write(ADDR_TEST, 0);  // LED mati
     // EEPROM.write(ADDR_TEST, 1);  // Berkedip 300ms
-    EEPROM.write(ADDR_TEST, 2);  // Berkedip 1000ms
+    // EEPROM.write(ADDR_TEST, 2);  // Berkedip 1000ms
     // EEPROM.write(ADDR_TEST, 3);  // Menyala terus
-    EEPROM.commit();  // Jangan lupa commit setelah write
+    // EEPROM.commit();  // Jangan lupa commit setelah write
 
     // Read current value from EEPROM
     int mode = EEPROM.read(ADDR_TEST);
