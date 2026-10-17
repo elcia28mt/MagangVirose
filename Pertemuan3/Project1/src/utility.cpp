@@ -99,8 +99,48 @@ void callback_data_serial(const uint8_t *data, int len) {
 }
 void baca_serial(void (*callback)(const uint8_t *data, int len)) {
     // TODO 2: implementasi kode buat nerima perintah dari serial
+    static uint8_t buffer[BUFFER_SIZE];
+    static int length = 0;
+
+    while (Serial.available() > 0) {
+        char c = Serial.read();
+
+        // Mengirimkan data saat menerima Enter ('\n' atau '\r')
+        if (c == '\n' || c == '\r') {
+            if (length > 0) {
+                buffer[length] = '\0';
+                callback(buffer, length);
+                length = 0; // Reset buffer
+            }
+        } else {
+            if (length < BUFFER_SIZE - 1) {
+                buffer[length++] = (uint8_t)c;
+            }
+        }
+    }
 }
 
 void process_perintah(const uint8_t *data, int len, int index_mac_address_asal) {
     // TODO 3: implementasi kode buat processing perintah
+    String input = "";
+        for (int i = 0; i < len; i++) {
+            input += (char)data[i];
+        }
+        input.trim(); // Menghapus whitespace/newline opsional
+
+        if (index_mac_address_asal == -1) {
+            // --- Perintah Berasal dari Serial ---
+            Serial.printf("[SERIAL] Memproses: %s\n", input.c_str());
+
+            // Contoh: Mengirim string langsung via ESP-NOW ke semua peer (Broadcast)
+            for (int i = 0; i < MAC_ADDRESS_TOTAL; i++) {
+                if (i != mac_index_ku) {
+                    esp_now_send(mac_addresses[i], (uint8_t *)input.c_str(), input.length());
+                }
+            }
+        } else {
+            // --- Perintah Berasal dari ESP-NOW ---
+            String nama_pengirim = mac_index_to_names(index_mac_address_asal);
+            Serial.printf("[ESP-NOW dari %s]: %s\n", nama_pengirim.c_str(), input.c_str());
+        }
 }

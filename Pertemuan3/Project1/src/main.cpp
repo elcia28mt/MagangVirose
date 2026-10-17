@@ -9,7 +9,9 @@ void setup() {
     mulai_esp_now(mac_index_ku);
 
     // TODO 1: Cetak nama mu gunakan fungsi mac_index_to_names
-
+    Serial.print("Nama Saya: ");
+    Serial.println(mac_index_to_names(mac_index_ku));
+    
     Serial.println("Menunggu perintah...");
 }
 
