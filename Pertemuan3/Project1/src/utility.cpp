@@ -105,7 +105,6 @@ void baca_serial(void (*callback)(const uint8_t *data, int len)) {
     while (Serial.available() > 0) {
         char c = Serial.read();
 
-        // Mengirimkan data saat menerima Enter ('\n' atau '\r')
         if (c == '\n' || c == '\r') {
             if (length > 0) {
                 buffer[length] = '\0';
@@ -121,27 +120,21 @@ void baca_serial(void (*callback)(const uint8_t *data, int len)) {
 }
 
 void process_perintah(const uint8_t *data, int len, int index_mac_address_asal) {
-    // Ubah data byte ke bentuk String agar mudah dipparsing
+
     String input = "";
     for (int i = 0; i < len; i++) {
         input += (char)data[i];
     }
     input.trim();
 
-    // ==========================================
-    // 1. JIKA PERINTAH BERASAL DARI SERIAL (index_mac_address_asal == -1)
-    // ==========================================
     if (index_mac_address_asal == -1) {
-        // Format input dari serial diasumsikan misal: "HALO <NamaTujuan>" atau "CEK <NamaTujuan>"
-        // Atau Anda bisa menyesuaikan cara parsing sesuai format tugas Anda.
-        // Contoh sederhana parsing command & target:
-        
+                
         int spaceIndex = input.indexOf(' ');
         String cmdStr = (spaceIndex == -1) ? input : input.substring(0, spaceIndex);
         String targetNama = (spaceIndex == -1) ? "" : input.substring(spaceIndex + 1);
         targetNama.trim();
 
-        // Cari index MAC tujuan berdasarkan nama
+
         int targetIndex = -1;
         for (int i = 0; i < MAC_ADDRESS_TOTAL; i++) {
             if (String(mac_names[i]).equalsIgnoreCase(targetNama)) {
@@ -158,27 +151,23 @@ void process_perintah(const uint8_t *data, int len, int index_mac_address_asal) 
         String namaKu = mac_index_to_names(mac_index_ku);
 
         if (cmdStr.equalsIgnoreCase("HALO")) {
-            // Ubah 'HAL' menjadi 'HALO'
+
             String pesanKirim = String(HALO) + ", 'Halo " + targetNama + " Aku " + namaKu + "'"; 
             esp_now_send(mac_addresses[targetIndex], (uint8_t *)pesanKirim.c_str(), pesanKirim.length());
             Serial.printf("[KIRIM SERIAL -> ESP-NOW]: %s\n", pesanKirim.c_str());
         }
         
         else if (cmdStr.equalsIgnoreCase("CEK")) {
-            // Ketentuan: Kirim packet perintah ke pengirim dengan format: "CEK(enum), '[Nama tujuan] ini [Namamu] apa kamu disana?'"
             String pesanKirim = String(CEK) + ", '" + targetNama + " ini " + namaKu + " apa kamu disana?'";
             esp_now_send(mac_addresses[targetIndex], (uint8_t *)pesanKirim.c_str(), pesanKirim.length());
             Serial.printf("[KIRIM SERIAL -> ESP-NOW]: %s\n", pesanKirim.c_str());
         }
     } 
-    // ==========================================
-    // 2. JIKA PERINTAH BERASAL Dari ESP-NOW (index_mac_address_asal >= 0)
-    // ==========================================
+    
     else {
         String namaPengirim = mac_index_to_names(index_mac_address_asal);
         String namaKu = mac_index_to_names(mac_index_ku);
 
-        // Parsing enum di awal data (misal format: "0, 'Isi pesan'")
         int commaIndex = input.indexOf(',');
         if (commaIndex == -1) return;
 
@@ -187,20 +176,19 @@ void process_perintah(const uint8_t *data, int len, int index_mac_address_asal) 
         isiPesan.trim();
 
         if (enumCommand == HALO) {
-            // Ketentuan: Jika menerima HALO dari ESP-NOW, kirim JAWABAN ke tujuan pengirim: "JAWAB(enum), 'Halo Juga [Nama Pengirim] Aku [Namamu]'"
+            
             String balas = String(JAWAB) + ", 'Halo Juga " + namaPengirim + " Aku " + namaKu + "'";
             esp_now_send(mac_addresses[index_mac_address_asal], (uint8_t *)balas.c_str(), balas.length());
             Serial.printf("[ESP-NOW] Terima HALO dari %s. Mengirim balasan...\n", namaPengirim.c_str());
 
         } else if (enumCommand == CEK) {
-            // Ketentuan: Jika menerima CEK dari ESP-NOW, kirim JAWABAN ke tujuan pengirim: "JAWAB(enum), 'Iya Aku [Nama pengirim] Disini - [Namamu]'"
-            // Catatan: Sesuai gambar, [Nama pengirim] di sini merujuk pada nama pengirim asli/lawan bicara
+            
             String balas = String(JAWAB) + ", 'Iya Aku " + namaPengirim + " Disini - " + namaKu + "'";
             esp_now_send(mac_addresses[index_mac_address_asal], (uint8_t *)balas.c_str(), balas.length());
             Serial.printf("[ESP-NOW] Terima CEK dari %s. Mengirim balasan...\n", namaPengirim.c_str());
 
         } else if (enumCommand == JAWAB) {
-            // Ketentuan: Perintah JAWAB cuma menerima dari ESP-NOW, cetak ke Serial Monitor String yang diterima
+           
             Serial.printf("[JAWAB DARI %s]: %s\n", namaPengirim.c_str(), isiPesan.c_str());
         }
     }

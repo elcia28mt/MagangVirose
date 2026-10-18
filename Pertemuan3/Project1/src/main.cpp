@@ -1,7 +1,6 @@
 #include "main.h"
 
-// TODO: Ganti dengan mac index mu
-const int mac_index_ku = 9;  //....
+const int mac_index_ku = 9; 
 
 void setup() {
     Serial.begin(115200);
