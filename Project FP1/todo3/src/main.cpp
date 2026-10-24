@@ -100,11 +100,18 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
 }
 
 void setup() {
+
     Serial.begin(115200);
     WiFi.mode(WIFI_STA);
+
     if (esp_now_init() != ESP_OK) return;
     esp_now_register_recv_cb(OnDataRecv);
     Serial.println("ESP-Server FreshMart Siap.");
+
+    // Ini buat nampilin MAC Address di layar Serial Monitor
+    Serial.println();
+    Serial.print("MAC Address Asliku adalah: ");
+    Serial.println(WiFi.macAddress());
 }
 
 void loop() {
