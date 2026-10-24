@@ -23,81 +23,89 @@ const int jumlahProduk = 4;
 
 struct __attribute__((packed)) PacketData {
     uint8_t token[6];
-    char payload[200]; // Berisi string JSON dari laptop
+    char payload[300];
 };
 
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
     PacketData packet;
-    if (len < sizeof(packet)) {
-        Serial.println("Error: Ukuran paket tidak valid!");
-        return;
-    }
+    if (len < sizeof(packet)) return;
     memcpy(&packet, incomingData, sizeof(packet));
 
     for (int i = 0; i < 6; i++) {
         if (packet.token[i] != VALID_TOKEN[i]) {
-            Serial.println("Error: Token autentikasi ditolak!");
+            Serial.println("Error: Token ditolak!");
             return;
         }
     }
 
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<300> doc;
     DeserializationError error = deserializeJson(doc, packet.payload);
     if (error) {
         Serial.println("Error: Format JSON tidak valid!");
         return;
     }
 
-    String idProduk = doc["id"];
-    int jumlahBeli = doc["jumlah"];
-
-    bool produkDitemukan = false;
+    JsonArray items = doc["items"];
     double totalBelanja = 0;
     String pesanRespon = "";
+    bool transaksiBerhasil = true;
+    int tempStokChanges[jumlahProduk] = {0};
 
-    for (int i = 0; i < jumlahProduk; i++) {
-        if (katalog[i].id == idProduk) {
-            produkDitemukan = true;
+    for (JsonObject item : items) {
+        String idProduk = item["id"];
+        int jumlahBeli = item["jumlah"];
 
-            if (jumlahBeli <= 0) {
-                pesanRespon = "Gagal: Jumlah beli harus angka positif!";
-            } else if (jumlahBeli > katalog[i].batasMaks) {
-                pesanRespon = "Gagal: Melebihi batas pembelian maksimum!";
-            } else if (jumlahBeli > katalog[i].stok) {
-                pesanRespon = "Gagal: Stok produk tidak mencukupi!";
-            } else if (katalog[i].stok == 0) {
-                pesanRespon = "Gagal: Produk dengan stok 0 tidak dapat dijual!";
-            } else {
-                katalog[i].stok -= jumlahBeli;
-                totalBelanja = katalog[i].harga * jumlahBeli;
-                pesanRespon = "Sukses! NoStruk: STR-" + String(millis()) + ", Item: " + katalog[i].nama + ", Total: Rp " + String(totalBelanja);
+        bool produkDitemukan = false;
+        for (int i = 0; i < jumlahProduk; i++) {
+            if (katalog[i].id == idProduk) {
+                produkDitemukan = true;
+
+                if (jumlahBeli <= 0) {
+                    pesanRespon = "Gagal: Jumlah beli harus angka positif!";
+                    transaksiBerhasil = false;
+                } else if (katalog[i].stok == 0) {
+                    pesanRespon = "Gagal: Produk " + katalog[i].nama + " habis!";
+                    transaksiBerhasil = false;
+                } else if (jumlahBeli > katalog[i].stok) {
+                    pesanRespon = "Gagal: Stok " + katalog[i].nama + " kurang!";
+                    transaksiBerhasil = false;
+                } else if (jumlahBeli > katalog[i].batasMaks) {
+                    pesanRespon = "Gagal: Melebihi batas maksimum pembelian!";
+                    transaksiBerhasil = false;
+                } else {
+                    totalBelanja += katalog[i].harga * jumlahBeli;
+                    tempStokChanges[i] += jumlahBeli;
+                }
+                break;
             }
+        }
+
+        if (!produkDitemukan) {
+            pesanRespon = "Gagal: ID Produk tidak ditemukan!";
+            transaksiBerhasil = false;
             break;
         }
+        if (!transaksiBerhasil) break;
     }
 
-    if (!produkDitemukan) {
-        pesanRespon = "Gagal: ID produk tidak ditemukan di katalog!";
+    if (transaksiBerhasil) {
+        for (int i = 0; i < jumlahProduk; i++) {
+            katalog[i].stok -= tempStokChanges[i];
+        }
+        pesanRespon = "Sukses! NoStruk: STR-" + String(millis()) + ", Total: Rp " + String(totalBelanja);
     }
 
     esp_now_send(mac_addr, (uint8_t *)pesanRespon.c_str(), pesanRespon.length() + 1);
+    Serial.println(pesanRespon);
 }
 
 void setup() {
     Serial.begin(115200);
-    
     WiFi.mode(WIFI_STA);
-
-    if (esp_now_init() != ESP_OK) {
-        Serial.println("Gagal menginisialisasi ESP-NOW!");
-        return;
-    }
-
+    if (esp_now_init() != ESP_OK) return;
     esp_now_register_recv_cb(OnDataRecv);
-    
-    Serial.println("ESP-Server FreshMart Siap Beroperasi.");
+    Serial.println("ESP-Server FreshMart Siap.");
 }
 
 void loop() {
-  
 }
