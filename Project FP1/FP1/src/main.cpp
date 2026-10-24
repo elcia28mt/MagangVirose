@@ -13,7 +13,6 @@ struct Produk {
     int batasMaks;
 };
 
-// Simulasi Database Katalog Produk[cite: 1]
 Produk katalog[] = {
     {"P001", "Beras 5kg", 65000, 20, 2},
     {"P002", "Minyak Goreng 2L", 32000, 15, 1},
