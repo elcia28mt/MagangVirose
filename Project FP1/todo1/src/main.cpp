@@ -5,7 +5,7 @@ void printHelp() {
     Serial.println("\n=======================================================================");
     Serial.println("       DAFTAR OPERASI KASIR FRESHMART     ");
     Serial.println("=======================================================================");
-    Serial.println("1. Help / daftar operasi  - Daftar Bantuan");
+    Serial.println("1. Help                   - Daftar Bantuan");
     Serial.println("2. Menu                   - Daftar Produk");
     Serial.println("3. Order <ID> <jml>       - Membuat Pesanan (Contoh: order P002 1)");
     Serial.println("4. Status                 - Mengecek status");
@@ -21,7 +21,7 @@ void printMenu() {
     Serial.println("---------------------------------\n");
 }
 
-//Ini untuk inisialisasinya, psg bautrate, trus tampilih  styff
+
 void setup() {
     Serial.begin(115200);
     delay(1000);
@@ -29,7 +29,7 @@ void setup() {
     printHelp();
 }
 
-// ubh json ke hexdecimal
+
 void sendHex(const String &jsonStr) {
     String hexString = "";
     for (size_t i = 0; i < jsonStr.length(); i++) {
@@ -79,7 +79,6 @@ void loop() {
             }
         } 
         else if (input.length() > 0) {
-            // Mendukung input JSON mentah jika diketik langsung
             Serial.print("[JSON Input]: ");
             Serial.println(input);
             Serial.print("[Send Hex to Bridge]: ");

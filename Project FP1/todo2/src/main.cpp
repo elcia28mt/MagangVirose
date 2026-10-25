@@ -14,7 +14,7 @@ struct __attribute__((packed)) PacketData {
     char payload[230];
 };
 
-// kode errornya
+
 String translateResponse(const String &rawResponse) {
     if (rawResponse == "E01") return "Token autentikasi tidak sesuai.";
     if (rawResponse == "E02") return "Paket tidak memiliki header yang benar.";
@@ -32,7 +32,7 @@ String translateResponse(const String &rawResponse) {
     return rawResponse;
 }
 
-//hasil translate yg dishow ke monitor
+
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     String response = "";
     for (int i = 0; i < len; i++) {
@@ -60,7 +60,7 @@ void setup() {
     Serial.println("ESP-Bridge FreshMart Siap.");
 }
 
-//konversinya
+
 void hexToBytes(const String &hexStr, uint8_t *byteArray, int byteLen) {
     for (int i = 0; i < byteLen; i++) {
         String byteString = hexStr.substring(i * 2, i * 2 + 2);
