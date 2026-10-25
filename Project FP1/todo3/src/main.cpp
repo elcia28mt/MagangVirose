@@ -22,26 +22,60 @@ Produk katalog[] = {
 const int jumlahProduk = 4;
 
 struct __attribute__((packed)) PacketData {
+    uint8_t header[4];
+    uint8_t source;
+    uint8_t destination;
     uint8_t token[6];
-    char payload[300];
+    uint16_t length;
+    char payload[230];
 };
 
-void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
-    PacketData packet;
-    if (len < sizeof(packet)) return;
-    memcpy(&packet, incomingData, sizeof(packet));
+String decodeHexPayload(const char* hexBytes, uint16_t dataLen) {
+    String decodedJson = "";
+    for (uint16_t i = 0; i < dataLen; i += 2) {
+        char byteStr[3] = { hexBytes[i], hexBytes[i+1], '\0' };
+        char asciiChar = (char)strtol(byteStr, NULL, 16);
+        decodedJson += asciiChar;
+    }
+    return decodedJson;
+}
 
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
+    if (len < sizeof(PacketData)) return;
+    PacketData packet;
+    memcpy(&packet, incomingData, sizeof(PacketData));
+
+    // E02: Header tidak valid[cite: 7]
+    if (packet.header[0] != 'F' || packet.header[1] != 'M' || packet.header[2] != 'R' || packet.header[3] != 'T') {
+        String errCode = "E02";
+        esp_now_send(mac_addr, (uint8_t *)errCode.c_str(), errCode.length() + 1);
+        return; 
+    }
+
+    // E01: Token tidak valid[cite: 7, 8]
     for (int i = 0; i < 6; i++) {
         if (packet.token[i] != VALID_TOKEN[i]) {
-            Serial.println("Error: Token ditolak!");
+            String errCode = "E01";
+            esp_now_send(mac_addr, (uint8_t *)errCode.c_str(), errCode.length() + 1);
             return;
         }
     }
 
+    // E03: Panjang data tidak valid[cite: 7]
+    if (packet.length == 0 || packet.length > 230) {
+        String errCode = "E03";
+        esp_now_send(mac_addr, (uint8_t *)errCode.c_str(), errCode.length() + 1);
+        return;
+    }
+
+    String jsonString = decodeHexPayload(packet.payload, packet.length);
+
+    // E05: JSON tidak valid[cite: 7]
     StaticJsonDocument<300> doc;
-    DeserializationError error = deserializeJson(doc, packet.payload);
+    DeserializationError error = deserializeJson(doc, jsonString);
     if (error) {
-        Serial.println("Error: Format JSON tidak valid!");
+        String errCode = "E05";
+        esp_now_send(mac_addr, (uint8_t *)errCode.c_str(), errCode.length() + 1);
         return;
     }
 
@@ -60,17 +94,8 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
             if (katalog[i].id == idProduk) {
                 produkDitemukan = true;
 
-                if (jumlahBeli <= 0) {
-                    pesanRespon = "Gagal: Jumlah beli harus angka positif!";
-                    transaksiBerhasil = false;
-                } else if (katalog[i].stok == 0) {
-                    pesanRespon = "Gagal: Produk " + katalog[i].nama + " habis!";
-                    transaksiBerhasil = false;
-                } else if (jumlahBeli > katalog[i].stok) {
-                    pesanRespon = "Gagal: Stok " + katalog[i].nama + " kurang!";
-                    transaksiBerhasil = false;
-                } else if (jumlahBeli > katalog[i].batasMaks) {
-                    pesanRespon = "Gagal: Melebihi batas maksimum pembelian!";
+                if (jumlahBeli <= 0 || jumlahBeli > katalog[i].batasMaks || jumlahBeli > katalog[i].stok || katalog[i].stok == 0) {
+                    pesanRespon = "E09"; // E09: Proses bisnis gagal (aturan stok / batas beli)[cite: 7]
                     transaksiBerhasil = false;
                 } else {
                     totalBelanja += katalog[i].harga * jumlahBeli;
@@ -81,7 +106,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
         }
 
         if (!produkDitemukan) {
-            pesanRespon = "Gagal: ID Produk tidak ditemukan!";
+            pesanRespon = "E08"; // E08: Data tidak ditemukan (ID Produk salah)[cite: 7]
             transaksiBerhasil = false;
             break;
         }
@@ -100,22 +125,12 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
 }
 
 void setup() {
-
     Serial.begin(115200);
     WiFi.mode(WIFI_STA);
 
     if (esp_now_init() != ESP_OK) return;
     esp_now_register_recv_cb(OnDataRecv);
-   
-    /*
-    // Ini buat nampilin MAC Address di layar Serial Monitor
-    Serial.println();
-    Serial.print("MAC Address Asliku adalah: ");
-    Serial.println(WiFi.macAddress());
-    */
-
     Serial.println("ESP-Server FreshMart Siap.");
 }
 
-void loop() {
-}
+void loop() {}
