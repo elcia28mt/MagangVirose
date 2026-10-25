@@ -2,14 +2,14 @@
 #include <ArduinoJson.h>
 
 void printHelp() {
-    Serial.println("\n==========================================");
+    Serial.println("\n=======================================================================");
     Serial.println("       DAFTAR OPERASI KASIR FRESHMART     ");
-    Serial.println("==========================================");
-    Serial.println("1. help / daftar operasi  - Menampilkan menu bantuan ini.");
-    Serial.println("2. menu                   - Menampilkan daftar katalog produk FreshMart.");
-    Serial.println("3. order <ID> <jml>       - Membuat pesanan (Contoh: order P002 1).");
-    Serial.println("4. status                 - Mengecek status koneksi serial.");
-    Serial.println("==========================================\n");
+    Serial.println("=======================================================================");
+    Serial.println("1. Help / daftar operasi  - Daftar Bantuan");
+    Serial.println("2. Menu                   - Daftar Produk");
+    Serial.println("3. Order <ID> <jml>       - Membuat Pesanan (Contoh: order P002 1)");
+    Serial.println("4. Status                 - Mengecek status");
+    Serial.println("=======================================================================\n");
 }
 
 void printMenu() {
@@ -21,6 +21,7 @@ void printMenu() {
     Serial.println("---------------------------------\n");
 }
 
+//Ini untuk inisialisasinya, psg bautrate, trus tampilih  styff
 void setup() {
     Serial.begin(115200);
     delay(1000);
@@ -28,7 +29,7 @@ void setup() {
     printHelp();
 }
 
-// Fungsi otomatis mengubah JSON string menjadi Hexadecimal
+// ubh json ke hexdecimal
 void sendHex(const String &jsonStr) {
     String hexString = "";
     for (size_t i = 0; i < jsonStr.length(); i++) {
@@ -36,7 +37,7 @@ void sendHex(const String &jsonStr) {
         sprintf(buf, "%02X", jsonStr[i]);
         hexString += buf;
     }
-    Serial.println(hexString); // Dikirim ke ESP-Bridge via Serial
+    Serial.println(hexString); // send ke esp bridge
 }
 
 void loop() {
@@ -51,10 +52,9 @@ void loop() {
             printMenu();
         } 
         else if (input.equalsIgnoreCase("status")) {
-            Serial.println("[STATUS]: Koneksi Serial Laptop ⇄ ESP-Bridge Aktif (Baudrate: 115200).");
+            Serial.println("[STATUS]: Koneksi Serial Laptop ddengan ESP-Bridge Aktif (Baudrate: 115200).");
         } 
         else if (input.startsWith("order ")) {
-            // Format perintah intuitif: order P002 1
             int firstSpace = input.indexOf(' ');
             int secondSpace = input.indexOf(' ', firstSpace + 1);
             if (secondSpace != -1) {
