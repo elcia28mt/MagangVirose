@@ -2,7 +2,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-uint8_t serverAddress[] = {0xD0, 0xEF, 0x76, 0x32, 0x55, 0xB8}; // Ganti MAC Server
+uint8_t serverAddress[] = {0xD0, 0xEF, 0x76, 0x32, 0x55, 0xB8};
 const uint8_t AUTH_TOKEN[6] = {0x46, 0x52, 0x53, 0x48, 0x30, 0x31};
 
 struct __attribute__((packed)) PacketData {
@@ -14,7 +14,7 @@ struct __attribute__((packed)) PacketData {
     char payload[230];
 };
 
-// Pemetaan kode error resmi sesuai dokumentasi README
+// kode errornya
 String translateResponse(const String &rawResponse) {
     if (rawResponse == "E01") return "Token autentikasi tidak sesuai.";
     if (rawResponse == "E02") return "Paket tidak memiliki header yang benar.";
@@ -29,9 +29,10 @@ String translateResponse(const String &rawResponse) {
     if (rawResponse == "E11") return "Identitas tujuan paket tidak sesuai.";
     if (rawResponse == "E12") return "Terjadi kesalahan internal saat memproses permintaan.";
     
-    return rawResponse; // Jika pesan sukses / struk, tampilkan langsung
+    return rawResponse;
 }
 
+//hasil translate yg dishow ke monitor
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     String response = "";
     for (int i = 0; i < len; i++) {
@@ -41,6 +42,7 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     Serial.print("[RESP]: ");
     Serial.println(translateResponse(response));
 }
+
 
 void setup() {
     Serial.begin(115200);
@@ -58,6 +60,7 @@ void setup() {
     Serial.println("ESP-Bridge FreshMart Siap.");
 }
 
+//konversinya
 void hexToBytes(const String &hexStr, uint8_t *byteArray, int byteLen) {
     for (int i = 0; i < byteLen; i++) {
         String byteString = hexStr.substring(i * 2, i * 2 + 2);
@@ -65,6 +68,7 @@ void hexToBytes(const String &hexStr, uint8_t *byteArray, int byteLen) {
     }
 }
 
+//utk kirimkannya
 void loop() {
     if (Serial.available() > 0) {
         String hexInput = Serial.readStringUntil('\n');
