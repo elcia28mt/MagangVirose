@@ -45,14 +45,12 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
     PacketData packet;
     memcpy(&packet, incomingData, sizeof(PacketData));
 
-    // E02: Header tidak valid[cite: 7]
     if (packet.header[0] != 'F' || packet.header[1] != 'M' || packet.header[2] != 'R' || packet.header[3] != 'T') {
         String errCode = "E02";
         esp_now_send(mac_addr, (uint8_t *)errCode.c_str(), errCode.length() + 1);
         return; 
     }
 
-    // E01: Token tidak valid[cite: 7, 8]
     for (int i = 0; i < 6; i++) {
         if (packet.token[i] != VALID_TOKEN[i]) {
             String errCode = "E01";
@@ -61,7 +59,6 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
         }
     }
 
-    // E03: Panjang data tidak valid[cite: 7]
     if (packet.length == 0 || packet.length > 230) {
         String errCode = "E03";
         esp_now_send(mac_addr, (uint8_t *)errCode.c_str(), errCode.length() + 1);
@@ -70,7 +67,6 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
 
     String jsonString = decodeHexPayload(packet.payload, packet.length);
 
-    // E05: JSON tidak valid[cite: 7]
     StaticJsonDocument<300> doc;
     DeserializationError error = deserializeJson(doc, jsonString);
     if (error) {
@@ -106,7 +102,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
         }
 
         if (!produkDitemukan) {
-            pesanRespon = "E08"; // E08: Data tidak ditemukan (ID Produk salah)[cite: 7]
+            pesanRespon = "E08";
             transaksiBerhasil = false;
             break;
         }
